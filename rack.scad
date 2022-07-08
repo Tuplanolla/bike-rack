@@ -30,7 +30,7 @@ d = 19;
 /// Width of the plank or board.
 w = 89;
 /// Length of the arms (wheelbase overlap).
-x = 500;
+x = 560;
 /// Length of the legs (handlebar width).
 y = (420 + 780) / 2;
 /// Size of the gap (tire width).
@@ -187,15 +187,19 @@ module rack(d, w, x, y, g, a) {
       supported_arms(d, w, x, g, a);
     children();
   }
-  /// TODO Check that the supports fit on narrower planks
-  /// (without skew, we must have `2 * d <= w` in normal mode or
-  //`d <= w` in economy mode).
-  /// TODO Check that the skewness does not create impossible geometries
-  /// (tricky math).
-  /// TODO Check that the feet do not lift the wheel up
-  /// (somewhat tricky math).
-  /// TODO Experimentally everything works up to 25 degrees of skewness.
 }
+
+/// Unskewed supports fit on planks
+/// when `2 * d <= w` in normal mode or `d <= w` in economy mode.
+/// Experimentally,
+/// skewed supports fit on the legs
+/// up to 22.5 degrees of skewness.
+/// Experimentally,
+/// tires do not touch each other
+/// down to 9 degrees of skewness.
+/// Experimentally,
+/// tires stay on the ground
+/// down to 560 millimeters of arm length.
 
 color("Silver")
   rack(d, w, x, y, 44, a)
