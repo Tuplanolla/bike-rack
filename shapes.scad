@@ -26,11 +26,11 @@ module torus(r0, r1) {
     circle(r1);
 }
 
-/// The invocation `right(w, h)` produces a right triangle
+/// The invocation `triangle(w, h)` produces an isosceles right triangle
 /// with the side length `w` and height `h`.
 /// The right angle of the triangle is placed at the origin and
 /// its height grows along the `z` axis.
-module right_triangle(w, h) {
+module triangle(w, h) {
   linear_extrude(h)
     polygon([[0, 0], [0, w], [w, 0]]);
 }
