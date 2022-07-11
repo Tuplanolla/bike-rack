@@ -25,27 +25,10 @@ module tirus(s) {
     torus((d + w) / 2, w / 2);
 }
 
-/// Depth of the plank or board.
-d = 19;
-/// Width of the plank or board.
-w = 114;
-/// Length of the arms (wheelbase overlap).
-x = 560;
-/// Length of the legs (handlebar width).
-y = 560 + w;
-/// Size of the gap (tire width).
-g = 34;
-/// Angle of skewness (for collision avoidance).
-// a = 45 * (1 + cos(360 * $t)) / 2;
-a = 15;
-/// Whether to save material.
-economy = false;
-
-module foot(d, w, x, y) {
+module foot(d, w, x, y, economy = false) {
   translate([x / 2 - w / 2, y / 2 - w / 2, 0])
     if (economy)
-      /// We point the foot triangles away from the tire
-      /// for optimal traction.
+      /// We point the triangle away from the tire for optimal traction.
       rotate([0, 0, 225])
       triangle(w / 2, d);
     else
@@ -53,52 +36,49 @@ module foot(d, w, x, y) {
       cube([w / 2, w / 2, d]);
 }
 
-module feet(d, w, x, y) {
-  foot(d, w, x, y);
+module feet(d, w, x, y, economy = false) {
+  foot(d, w, x, y, economy = economy);
   mirror([1, 0, 0])
-    foot(d, w, x, y);
+    foot(d, w, x, y, economy = economy);
   mirror([0, 1, 0])
-    foot(d, w, x, y);
+    foot(d, w, x, y, economy = economy);
   mirror([1, 0, 0])
     mirror([0, 1, 0])
-    foot(d, w, x, y);
+    foot(d, w, x, y, economy = economy);
 }
 
-module ankle(d, w, x, y) {
+module leg(d, w, x, y) {
   translate([- x / 2, y / 2 - w, 0])
     cube([x, w / 2, d]);
 }
 
-module ankles(d, w, x, y) {
-  ankle(d, w, x, y);
+module legs(d, w, x, y) {
+  leg(d, w, x, y);
   mirror([0, 1, 0])
-    ankle(d, w, x, y);
+    leg(d, w, x, y);
 }
 
-module leg(d, w, x, y) {
+module perpendicular_bodypart(d, w, x, y) {
   translate([x / 2 - w, - y / 2, 0])
     cube([w, y, d]);
 }
 
-module legs(d, w, x, y) {
-  leg(d, w, x, y);
-  mirror([1, 0, 0])
-    leg(d, w, x, y);
-}
-
-module hook(d, w, x, y) {
+module parallel_bodypart(d, w, x, y) {
   translate([- x / 2 + w, y / 2 - w, 0])
-    /// This `$e` is here just to emphasize that there is a boundary.
-    cube([x - 2 * w, w, d - $e]);
+    /// This `d / 4` is here just to emphasize that there is a boundary.
+    cube([x - 2 * w, w, d - d / 4]);
 }
 
-module hooks(d, w, x, y) {
-  hook(d, w, x, y);
+module body(d, w, x, y) {
+  perpendicular_bodypart(d, w, x, y);
+  mirror([1, 0, 0])
+    perpendicular_bodypart(d, w, x, y);
+  parallel_bodypart(d, w, x, y);
   mirror([0, 1, 0])
-    hook(d, w, x, y);
+    parallel_bodypart(d, w, x, y);
 }
 
-module bevel(d, w, x, g) {
+module chamfer(d, w, x, g) {
   translate([$e + x / 2, g / 2 - $e, w + $e])
     rotate([0, 90, 90])
     triangle($e + w / 2, 2 * $e + d);
@@ -108,9 +88,9 @@ module arm(d, w, x, g) {
   difference() {
     translate([- x / 2, g / 2, 0])
       cube([x, d, w]);
-    bevel(d, w, x, g);
+    chamfer(d, w, x, g);
     mirror([1, 0, 0])
-      bevel(d, w, x, g);
+      chamfer(d, w, x, g);
   }
 }
 
@@ -127,38 +107,37 @@ module support(d, w, x, g) {
     triangle(w, d);
 }
 
-module supported_arms(d, w, x, g, a) {
-  let (x_sub = x - d * sin(a))
-  let (dx_skew = (g + d) * tan(a) / 2,
-      x_skew = sqrt(x_sub ^ 2 + (x_sub * tan(a)) ^ 2)) {
-
-    translate([dx_skew, 0, 0])
+module supported_arms(d, w, x, g, a = 0) {
+  rotate([0, 0, a])
+    let (x_skew = x / cos(a) - d * tan(a),
+        x_shift = (g + d) * tan(a) / 2) {
+    translate([x_shift, 0, 0])
       arm(d, w, x_skew, g);
     mirror([0, 1, 0])
-      translate([- dx_skew, 0, 0])
+      translate([- x_shift, 0, 0])
       arm(d, w, x_skew, g);
 
-    translate([dx_skew, 0, 0])
+    translate([x_shift, 0, 0])
       support(d, w, x_skew, g);
     mirror([1, 0, 0])
-      translate([- dx_skew, 0, 0])
+      translate([- x_shift, 0, 0])
       support(d, w, x_skew, g);
     mirror([0, 1, 0])
-      translate([- dx_skew, 0, 0])
+      translate([- x_shift, 0, 0])
       support(d, w, x_skew, g);
     mirror([1, 0, 0])
       mirror([0, 1, 0])
-      translate([dx_skew, 0, 0])
+      translate([x_shift, 0, 0])
       support(d, w, x_skew, g);
   }
 }
 
 module cut(d, w, x, y) {
-  let (size = x / (3 * sqrt(2)))
-    // size / sqrt(2) == x / 6
-    translate([x / 4, y / 2 + size / sqrt(2) - w / 2, - $e])
+  /// The error term is `6 * $e`,
+  /// because each rack can have up to six neighboring racks.
+  translate([x / 4, y / 2 + x / 6 - w / 2, - 6 * $e])
     rotate([0, 0, - 135])
-    triangle(size, 2 * $e + d);
+    triangle(x / (3 * sqrt(2)), 12 * $e + d);
 }
 
 module cuts(d, w, x, y) {
@@ -172,53 +151,61 @@ module cuts(d, w, x, y) {
     cut(d, w, x, y);
 }
 
-module rack(d, w, x, y, g, a) {
-  feet(d, w, x, y);
+module rack(d, w, x, y, g, a, economy = false) {
+  feet(d, w, x, y, economy = economy);
   translate([0, 0, d])
-    ankles(d, w, x, y);
+    legs(d, w, x, y);
   translate([0, 0, 2 * d])
     difference() {
-      union() {
-        legs(d, w, x, y);
-        hooks(d, w, x, y);
-      }
+      body(d, w, x, y);
       cuts(d, w, x, y);
     }
-  rotate([0, 0, a]) {
-    translate([0, 0, 3 * d])
-      supported_arms(d, w, x, g, a);
+  translate([0, 0, 3 * d])
+    supported_arms(d, w, x, g, a);
+  rotate([0, 0, a])
     children();
-  }
 }
 
-/// Unskewed supports fit on planks
-/// when `2 * d <= w` in normal mode or `d <= w` in economy mode.
-/// Experimentally,
-/// skewed supports fit on the legs
-/// up to 22.5 degrees of skewness.
-/// Experimentally,
-/// tires do not touch each other
-/// down to 9 degrees of skewness.
-/// Experimentally,
-/// tires stay on the ground
-/// down to 560 millimeters of arm length.
+/// Whether to save material.
+economy = false;
+/// Depth of the lumber (plank or board).
+d = 19;
+/// Width of the lumber (plank or board).
+w = 114;
+assert(economy ? d <= w : 2 * d <= w,
+    "Lumber is rounder than it should be!");
+/// Parallel length of the body (affected by rim size and tire height).
+x = 600;
+/// Perpendicular length of the body (affected by handlebar size).
+y = 600 + w / 2;
+/// Size of the gap (affected by tire width).
+g = 42;
+/// Angle of skewness (affected by tire width and size of the body).
+// a = 7.5 + 7.5 * (1 + cos(360 * $t));
+// echo(a = a);
+a = 15;
+
+/// We choose `x` and `y` so that
+/// the intersection of `rack` and `tirus` is empty.
+/// We also choose `a` so that
+/// the pairwise intersection of every `tirus` is empty.
 
 color("Silver")
-  rack(d, w, x, y, 44, a)
+  rack(d, w, x, y, 44, a, economy)
   tirus("Schwalbe Marathon Winter Plus");
 
 color("DarkRed")
-  translate([x, 0, 0])
-  rack(d, w, x, y, 34, a)
+  translate([x, 0, $e])
+  rack(d, w, x, y, 34, a, economy)
   tirus("WTB Exposure Comp");
 
 color("LightBlue")
   /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
   translate([x + x / 4, y - w / 2, 2 * $e])
-  rack(d, w, x, y, 68, a)
+  rack(d, w, x, y, 68, a, economy)
   tirus("Vee Tire Flow Snap");
 
 color("Khaki")
-  translate([x / 4, y - w / 2, 2 * $e])
-  rack(d, w, x, y, 102, a)
+  translate([x / 4, y - w / 2, 3 * $e])
+  rack(d, w, x, y, 102, a, economy)
   tirus("Schwalbe Jumbo Jim");
