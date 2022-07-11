@@ -1,4 +1,4 @@
-$e = 1;
+$e = 0.1;
 $fn = 16;
 
 use <functions.scad>
@@ -16,23 +16,23 @@ module tirus(s) {
       ["Vee Tire Snow Shoe 2XL", 128, 559]])
     let (i = find(s, [for (v = data) v[0]]))
     if (i != undef)
-      let (v = data[i])
-      let (w = v[1], d = v[2])
-      translate([0, 0, d / 2 + w])
-      rotate([90, 0, 0])
-      /// This rotation is here just to accommodate low values of `$fn`.
-      rotate([0, 0, 180 / $fn])
-      torus((d + w) / 2, w / 2);
+    let (v = data[i])
+    let (w = v[1], d = v[2])
+    translate([0, 0, d / 2 + w])
+    rotate([90, 0, 0])
+    /// This rotation is here just to accommodate low values of `$fn`.
+    rotate([0, 0, 180 / $fn])
+    torus((d + w) / 2, w / 2);
 }
 
 /// Depth of the plank or board.
 d = 19;
 /// Width of the plank or board.
-w = 89;
+w = 114;
 /// Length of the arms (wheelbase overlap).
 x = 560;
 /// Length of the legs (handlebar width).
-y = (420 + 780) / 2;
+y = 560 + w;
 /// Size of the gap (tire width).
 g = 34;
 /// Angle of skewness (for collision avoidance).
@@ -47,10 +47,10 @@ module foot(d, w, x, y) {
       /// We point the foot triangles away from the tire
       /// for optimal traction.
       rotate([0, 0, 225])
-        triangle(w / 2, d);
+      triangle(w / 2, d);
     else
       translate([- w / 4, - w / 2, 0])
-        cube([w / 2, w / 2, d]);
+      cube([w / 2, w / 2, d]);
 }
 
 module feet(d, w, x, y) {
@@ -88,7 +88,8 @@ module legs(d, w, x, y) {
 
 module hook(d, w, x, y) {
   translate([- x / 2 + w, y / 2 - w, 0])
-    cube([x - 2 * w, w, d]);
+    /// This `$e` is here just to emphasize that there is a boundary.
+    cube([x - 2 * w, w, d - $e]);
 }
 
 module hooks(d, w, x, y) {
@@ -116,14 +117,14 @@ module arm(d, w, x, g) {
 module support(d, w, x, g) {
   if (economy)
     translate([x / 2 - w / 2, g / 2 + d, 0])
-      rotate([0, - 90, 0])
-      translate([0, 0, - d / 2])
-      triangle(w / 2, d);
+    rotate([0, - 90, 0])
+    translate([0, 0, - d / 2])
+    triangle(w / 2, d);
   else
     translate([x / 2 - w / 2 - d / 2, g / 2 + d, 0])
-      rotate([0, - 90, 0])
-      translate([0, 0, - d / 2])
-      triangle(w, d);
+    rotate([0, - 90, 0])
+    translate([0, 0, - d / 2])
+    triangle(w, d);
 }
 
 module supported_arms(d, w, x, g, a) {
@@ -154,6 +155,7 @@ module supported_arms(d, w, x, g, a) {
 
 module cut(d, w, x, y) {
   let (size = x / (3 * sqrt(2)))
+    // size / sqrt(2) == x / 6
     translate([x / 4, y / 2 + size / sqrt(2) - w / 2, - $e])
     rotate([0, 0, - 135])
     triangle(size, 2 * $e + d);
@@ -206,16 +208,17 @@ color("Silver")
   tirus("Schwalbe Marathon Winter Plus");
 
 color("DarkRed")
-  translate([x, 0, $e])
+  translate([x, 0, 0])
   rack(d, w, x, y, 34, a)
   tirus("WTB Exposure Comp");
 
 color("LightBlue")
-  translate([x + x / 4, y - (w - x / (3 * sqrt(2)) / sqrt(2) / 2), 2 * $e])
+  /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
+  translate([x + x / 4, y - w / 2, 2 * $e])
   rack(d, w, x, y, 68, a)
   tirus("Vee Tire Flow Snap");
 
 color("Khaki")
-  translate([x / 4, y - (w - x / (3 * sqrt(2)) / sqrt(2) / 2), 3 * $e])
+  translate([x / 4, y - w / 2, 2 * $e])
   rack(d, w, x, y, 102, a)
   tirus("Schwalbe Jumbo Jim");
