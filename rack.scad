@@ -4,6 +4,12 @@ $fn = 16;
 use <functions.scad>
 use <shapes.scad>
 
+module mirror_copy(v) {
+  children();
+  mirror(v)
+    children();
+}
+
 module tirus(s) {
   let (data = [
       ["Schwalbe Marathon Winter Plus", 42, 622],
@@ -16,46 +22,47 @@ module tirus(s) {
       ["Vee Tire Snow Shoe 2XL", 128, 559]])
     let (i = find(s, [for (v = data) v[0]]))
     if (i != undef)
-    let (v = data[i])
-    let (w = v[1], d = v[2])
-    translate([0, 0, d / 2 + w])
-    rotate([90, 0, 0])
-    /// This rotation is here just to accommodate low values of `$fn`.
-    rotate([0, 0, 180 / $fn])
-    torus((d + w) / 2, w / 2);
+      let (v = data[i])
+      let (w = v[1], d = v[2])
+      translate([0, 0, d / 2 + w])
+      rotate([90, 0, 0])
+      /// This rotation is here just to accommodate low values of `$fn`.
+      rotate([0, 0, 180 / $fn])
+      torus((d + w) / 2, w / 2);
 }
 
 module foot(d, w, x, y, economy = false) {
-  translate([x / 2 - w / 2, y / 2 - w / 2, 0])
-    if (economy)
-      /// We point the triangle away from the tire for optimal traction.
-      rotate([0, 0, 225])
-      triangle(w / 2, d);
-    else
-      translate([- w / 4, - w / 2, 0])
-      cube([w / 2, w / 2, d]);
+  if (economy)
+    translate([x / 2 - w / 4, y / 2 - w, 0])
+    rotate([0, 0, 90])
+    triangle(w / 2, d);
+  else
+    translate([x / 2 - 3 * w / 4, y / 2 - w, 0])
+    cube([w / 2, w / 2, d]);
 }
 
 module feet(d, w, x, y, economy = false) {
-  foot(d, w, x, y, economy = economy);
-  mirror([1, 0, 0])
-    foot(d, w, x, y, economy = economy);
-  mirror([0, 1, 0])
-    foot(d, w, x, y, economy = economy);
-  mirror([1, 0, 0])
-    mirror([0, 1, 0])
-    foot(d, w, x, y, economy = economy);
+  mirror_copy([0, 1, 0])
+    mirror_copy([1, 0, 0])
+    foot(d, w, x, y, economy);
 }
 
-module leg(d, w, x, y) {
-  translate([- x / 2, y / 2 - w, 0])
-    cube([x, w / 2, d]);
+module leg(d, w, x, y, economy = false) {
+  if (economy)
+    mirror_copy([1, 0, 0])
+      translate([x / 2 - x / 3 + 3 * w / 4, y / 2 - w, 0]) {
+        cube([x / 3 - w, w / 2, d]);
+        rotate([0, 0, 90])
+          triangle(w / 2, d);
+      }
+  else
+    translate([- x / 2, y / 2 - w, 0])
+      cube([x, w / 2, d]);
 }
 
-module legs(d, w, x, y) {
-  leg(d, w, x, y);
-  mirror([0, 1, 0])
-    leg(d, w, x, y);
+module legs(d, w, x, y, economy = false) {
+  mirror_copy([0, 1, 0])
+    leg(d, w, x, y, economy);
 }
 
 module perpendicular_bodypart(d, w, x, y) {
@@ -65,16 +72,15 @@ module perpendicular_bodypart(d, w, x, y) {
 
 module parallel_bodypart(d, w, x, y) {
   translate([- x / 2 + w, y / 2 - w, 0])
-    /// This `d / 4` is here just to emphasize that there is a boundary.
-    cube([x - 2 * w, w, d - d / 4]);
+    /// This scaling is here just to emphasize that there is a boundary.
+    scale([1, 1, 3 / 4])
+    cube([x - 2 * w, w, d]);
 }
 
 module body(d, w, x, y) {
-  perpendicular_bodypart(d, w, x, y);
-  mirror([1, 0, 0])
+  mirror_copy([1, 0, 0])
     perpendicular_bodypart(d, w, x, y);
-  parallel_bodypart(d, w, x, y);
-  mirror([0, 1, 0])
+  mirror_copy([0, 1, 0])
     parallel_bodypart(d, w, x, y);
 }
 
@@ -88,13 +94,12 @@ module arm(d, w, x, g) {
   difference() {
     translate([- x / 2, g / 2, 0])
       cube([x, d, w]);
-    chamfer(d, w, x, g);
-    mirror([1, 0, 0])
+    mirror_copy([1, 0, 0])
       chamfer(d, w, x, g);
   }
 }
 
-module support(d, w, x, g) {
+module support(d, w, x, g, economy = false) {
   if (economy)
     translate([x / 2 - w / 2, g / 2 + d, 0])
     rotate([0, - 90, 0])
@@ -107,29 +112,24 @@ module support(d, w, x, g) {
     triangle(w, d);
 }
 
-module supported_arms(d, w, x, g, a = 0) {
+module supported_arms(d, w, x, g, a = 0, economy = false) {
   rotate([0, 0, a])
     let (x_skew = x / cos(a) - d * tan(a),
         x_shift = (g + d) * tan(a) / 2) {
-    translate([x_shift, 0, 0])
-      arm(d, w, x_skew, g);
-    mirror([0, 1, 0])
-      translate([- x_shift, 0, 0])
-      arm(d, w, x_skew, g);
-
-    translate([x_shift, 0, 0])
-      support(d, w, x_skew, g);
-    mirror([1, 0, 0])
-      translate([- x_shift, 0, 0])
-      support(d, w, x_skew, g);
-    mirror([0, 1, 0])
-      translate([- x_shift, 0, 0])
-      support(d, w, x_skew, g);
-    mirror([1, 0, 0])
-      mirror([0, 1, 0])
       translate([x_shift, 0, 0])
-      support(d, w, x_skew, g);
-  }
+        arm(d, w, x_skew, g);
+      translate([- x_shift, 0, 0])
+        mirror([0, 1, 0])
+        arm(d, w, x_skew, g);
+
+      translate([x_shift, 0, 0])
+        mirror_copy([1, 0, 0])
+        support(d, w, x_skew, g, economy);
+      translate([- x_shift, 0, 0])
+        mirror([0, 1, 0])
+        mirror_copy([1, 0, 0])
+        support(d, w, x_skew, g, economy);
+    }
 }
 
 module cut(d, w, x, y) {
@@ -141,27 +141,22 @@ module cut(d, w, x, y) {
 }
 
 module cuts(d, w, x, y) {
-  cut(d, w, x, y);
-  mirror([1, 0, 0])
-    cut(d, w, x, y);
-  mirror([0, 1, 0])
-    cut(d, w, x, y);
-  mirror([1, 0, 0])
-    mirror([0, 1, 0])
+  mirror_copy([0, 1, 0])
+    mirror_copy([1, 0, 0])
     cut(d, w, x, y);
 }
 
 module rack(d, w, x, y, g, a, economy = false) {
-  feet(d, w, x, y, economy = economy);
+  feet(d, w, x, y, economy);
   translate([0, 0, d])
-    legs(d, w, x, y);
+    legs(d, w, x, y, economy);
   translate([0, 0, 2 * d])
     difference() {
       body(d, w, x, y);
       cuts(d, w, x, y);
     }
   translate([0, 0, 3 * d])
-    supported_arms(d, w, x, g, a);
+    supported_arms(d, w, x, g, a, economy);
   rotate([0, 0, a])
     children();
 }
@@ -177,35 +172,38 @@ assert(economy ? d <= w : 2 * d <= w,
 /// Parallel length of the body (affected by rim size and tire height).
 x = 600;
 /// Perpendicular length of the body (affected by handlebar size).
-y = 600 + w / 2;
+y = 600;
 /// Size of the gap (affected by tire width).
 g = 42;
 /// Angle of skewness (affected by tire width and size of the body).
-// a = 7.5 + 7.5 * (1 + cos(360 * $t));
-// echo(a = a);
-a = 15;
+a = atan((x / 4) / y);
+echo(a = a);
 
 /// We choose `x` and `y` so that
 /// the intersection of `rack` and `tirus` is empty.
 /// We also choose `a` so that
 /// the pairwise intersection of every `tirus` is empty.
 
+/// This rack fits a Tunturi H310.
 color("Silver")
-  rack(d, w, x, y, 44, a, economy)
+  rack(d, w, x, y, 44, a, !economy)
   tirus("Schwalbe Marathon Winter Plus");
 
+/// This rack fits a Marin Gestalt.
 color("DarkRed")
+  /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
   translate([x, 0, $e])
-  rack(d, w, x, y, 34, a, economy)
+  rack(d, w, x, y, 34, a, !economy)
   tirus("WTB Exposure Comp");
 
+/// This rack fits a Marin San Quentin.
 color("LightBlue")
-  /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
   translate([x + x / 4, y - w / 2, 2 * $e])
   rack(d, w, x, y, 68, a, economy)
   tirus("Vee Tire Flow Snap");
 
+/// This rack fits a Tunturi eMAX FullFat.
 color("Khaki")
-  translate([x / 4, y - w / 2, 3 * $e])
+  translate([- x / 4, y - w / 2, 3 * $e])
   rack(d, w, x, y, 102, a, economy)
   tirus("Schwalbe Jumbo Jim");
