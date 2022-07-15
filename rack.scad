@@ -2,13 +2,8 @@ $e = 0.1;
 $fn = 16;
 
 use <functions.scad>
+use <operations.scad>
 use <shapes.scad>
-
-module mirror_copy(v) {
-  children();
-  mirror(v)
-    children();
-}
 
 module tirus(s) {
   let (data = [
