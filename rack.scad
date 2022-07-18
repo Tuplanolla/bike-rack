@@ -51,7 +51,7 @@ module leg(d, w, x, y, economy = false) {
       cube([x / 3 - w, w / 2, d]);
       rotate([0, 0, 90])
         triangle(w / 2, d);
-    }
+  }
   else
     translate([- x / 2, y / 2 - w, 0])
     cube([x, w / 2, d]);
@@ -74,11 +74,31 @@ module parallel_bodypart(d, w, x, y, economy = false) {
     cube([x - 2 * w, w, d]);
 }
 
+module reinforcement(d, w, x, y, economy = false) {
+  if (economy) {
+    mirror_copy([0, 1, 0]) {
+      translate([- w / 4, y / 2 - w, 0])
+      cube([w / 2, w, d]);
+      mirror_copy([1, 0, 0])
+        translate([x / 2 - w / 4, y / 2 - w, 0])
+        cube([w / 4, w, d]);
+    }
+  }
+  else
+    assert(true);
+}
+
+module reinforced_parallel_bodypart(d, w, x, y, economy = false) {
+  parallel_bodypart(d, w, x, y, economy);
+  translate([0, 0, - d])
+    reinforcement(d, w, x, y, economy);
+}
+
 module body(d, w, x, y, economy = false) {
   mirror_copy([1, 0, 0])
     perpendicular_bodypart(d, w, x, y, economy);
   mirror_copy([0, 1, 0])
-    parallel_bodypart(d, w, x, y, economy);
+    reinforced_parallel_bodypart(d, w, x, y, economy);
 }
 
 module chamfer(d, w, x, g) {
