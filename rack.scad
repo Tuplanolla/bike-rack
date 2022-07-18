@@ -55,13 +55,12 @@ module leg(d, w, x, y, economy = false) {
   }
   else
     difference() {
-      translate([- x / 2, y / 2 - w, 0])
-        cube([x, w / 2, d]);
-      translate([- w / 4, y / 2 - 3 * w / 4, - $e])
-        cube([w / 2, w / 4 + $e, d + 2 * $e]);
-      mirror_copy([1, 0, 0])
-        translate([x / 2 - w / 4, y / 2 - 3 * w / 4, - $e])
-        cube([w / 4 + $e, w / 4 + $e, d + 2 * $e]);
+      translate([- x / 2 + w / 4, y / 2 - w, 0])
+        cube([x - w / 2, w / 2, d]);
+      translate([- w / 4, y / 2 - w / 2, - $e])
+        translate([w / 4, - w / 4, 0])
+        rotate([0, 0, 45])
+        triangle(w / (2 * sqrt(2)) + $e, d + $e);
   }
 }
 
@@ -84,21 +83,21 @@ module parallel_bodypart(d, w, x, y, economy = false) {
 
 module reinforcement(d, w, x, y, economy = false) {
   if (economy)
-    mirror_copy([0, 1, 0]) {
-      translate([- w / 4, y / 2 - w, 0])
-      cube([w / 2, w, d]);
-      mirror_copy([1, 0, 0])
-        translate([x / 2 - w / 4, y / 2 - w, 0])
-        cube([w / 4, w, d]);
-  }
+    mirror_copy([0, 1, 0])
+    translate([- w / 4, y / 2 - w, 0])
+    cube([w / 2, w, d]);
   else
-    mirror_copy([0, 1, 0]) {
-      translate([- w / 4, y / 2 - 3 * w / 4, 0])
-        cube([w / 2, 3 * w / 4, d]);
-      mirror_copy([1, 0, 0])
-        translate([x / 2 - w / 4, y / 2 - 3 * w / 4, 0])
-        cube([w / 4, 3 * w / 4, d]);
+    mirror_copy([0, 1, 0])
+    translate([- w / 4, y / 2 - w / 2, 0]) {
+      cube([w / 2, w / 2, d]);
+      translate([w / 4, - w / 4, 0])
+        rotate([0, 0, 45])
+        triangle(w / (2 * sqrt(2)), d);
   }
+
+  mirror_copy([1, 0, 0])
+    translate([x / 2 - w / 4, y / 2 - w, 0])
+    cube([w / 4, w, d]);
 }
 
 module reinforced_parallel_bodypart(d, w, x, y, economy = false) {
