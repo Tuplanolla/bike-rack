@@ -58,10 +58,10 @@ module leg(d, w, x, y, economy = false) {
       translate([- x / 2, y / 2 - w, 0])
         cube([x, w / 2, d]);
       translate([- w / 4, y / 2 - 3 * w / 4, - $e])
-        cube([w / 2, 3 * w / 4, d + 2 * $e]);
+        cube([w / 2, w / 4 + $e, d + 2 * $e]);
       mirror_copy([1, 0, 0])
         translate([x / 2 - w / 4, y / 2 - 3 * w / 4, - $e])
-        cube([w / 4 + $e, 3 * w / 4, d + 2 * $e]);
+        cube([w / 4 + $e, w / 4 + $e, d + 2 * $e]);
   }
 }
 
