@@ -30,8 +30,8 @@ module tirus(s) {
 
 module foot(d, w, x, y, economy = false) {
   if (economy)
-    translate([x / 2 - w / 4, y / 2 - w, 0])
-    rotate([0, 0, 90])
+    translate([x / 2 - w / 4, y / 2 - w / 2, 0])
+    rotate([0, 0, 180])
     triangle(w / 2, d);
   else
     translate([x / 2 - 3 * w / 4, y / 2 - w, 0])
@@ -49,12 +49,20 @@ module leg(d, w, x, y, economy = false) {
     mirror_copy([1, 0, 0])
     translate([x / 2 - x / 3 + 3 * w / 4, y / 2 - w, 0]) {
       cube([x / 3 - w, w / 2, d]);
-      rotate([0, 0, 90])
+      translate([0, w / 2, 0])
+        rotate([0, 0, 180])
         triangle(w / 2, d);
   }
   else
-    translate([- x / 2, y / 2 - w, 0])
-    cube([x, w / 2, d]);
+    difference() {
+      translate([- x / 2, y / 2 - w, 0])
+        cube([x, w / 2, d]);
+      translate([- w / 4, y / 2 - 3 * w / 4, - $e])
+        cube([w / 2, 3 * w / 4, d + 2 * $e]);
+      mirror_copy([1, 0, 0])
+        translate([x / 2 - w / 4, y / 2 - 3 * w / 4, - $e])
+        cube([w / 4 + $e, 3 * w / 4, d + 2 * $e]);
+  }
 }
 
 module legs(d, w, x, y, economy = false) {
@@ -75,22 +83,31 @@ module parallel_bodypart(d, w, x, y, economy = false) {
 }
 
 module reinforcement(d, w, x, y, economy = false) {
-  if (economy) {
+  if (economy)
     mirror_copy([0, 1, 0]) {
       translate([- w / 4, y / 2 - w, 0])
       cube([w / 2, w, d]);
       mirror_copy([1, 0, 0])
         translate([x / 2 - w / 4, y / 2 - w, 0])
         cube([w / 4, w, d]);
-    }
   }
   else
-    assert(true);
+    mirror_copy([0, 1, 0]) {
+      translate([- w / 4, y / 2 - 3 * w / 4, 0])
+        cube([w / 2, 3 * w / 4, d]);
+      mirror_copy([1, 0, 0])
+        translate([x / 2 - w / 4, y / 2 - 3 * w / 4, 0])
+        cube([w / 4, 3 * w / 4, d]);
+  }
 }
 
 module reinforced_parallel_bodypart(d, w, x, y, economy = false) {
   parallel_bodypart(d, w, x, y, economy);
-  translate([0, 0, - d])
+  /// This scaling is here just to emphasize that there is a boundary.
+  scale([1, 1, 3 / 4])
+    translate([0, 0, - d])
+    /// This color is here to indicate reinforcements are optional.
+    color(alpha = 0.5)
     reinforcement(d, w, x, y, economy);
 }
 
