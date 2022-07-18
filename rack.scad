@@ -46,6 +46,7 @@ module feet(d, w, x, y, economy = false) {
 
 module leg(d, w, x, y, economy = false) {
   if (economy)
+    mirror_copy([1, 0, 0])
     translate([x / 2 - x / 3 + 3 * w / 4, y / 2 - w, 0]) {
       cube([x / 3 - w, w / 2, d]);
       translate([0, w / 2, 0])
@@ -54,12 +55,11 @@ module leg(d, w, x, y, economy = false) {
   }
   else
     translate([- x / 2 + w / 4, y / 2 - w, 0])
-      cube([x - w / 2, w / 2, d]);
+    cube([x - w / 2, w / 2, d]);
 }
 
 module legs(d, w, x, y, economy = false) {
   mirror_copy([0, 1, 0])
-    mirror_copy([1, 0, 0])
     leg(d, w, x, y, economy);
 }
 
@@ -77,11 +77,9 @@ module parallel_bodypart(d, w, x, y, economy = false) {
 
 module reinforcement(d, w, x, y, economy = false) {
   if (economy)
-    mirror_copy([0, 1, 0])
     translate([- w / 4, y / 2 - w, 0])
     cube([w / 2, w, d]);
   else
-    mirror_copy([0, 1, 0])
     translate([- w / 4, y / 2 - w / 2, 0])
     cube([w / 2, w / 2, d]);
 
