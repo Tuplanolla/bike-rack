@@ -12,7 +12,7 @@ module tirus(s) {
       ["WTB Exposure Comp", 32, 622],
       ["Merida Race Lite", 52, 584],
       ["Vee Tire Flow Snap", 66, 584],
-      ["Schwalbe Jumbo Jim", 100, 559],
+      ["Wanda P1258", 100, 559],
       /// This is the narrowest tire that is still manufactured.
       ["Tufo Elite", 19, 622],
       /// This is the widest tire that is still manufactured.
@@ -41,7 +41,7 @@ module foot(d, w, x, y, economy = false) {
 module feet(d, w, x, y, economy = false) {
   mirror_copy([0, 1, 0])
     mirror_copy([1, 0, 0])
-    foot(d, w, x, y, economy);
+    foot(d, w, x, y, economy = economy);
 }
 
 module leg(d, w, x, y, economy = false) {
@@ -89,20 +89,21 @@ module reinforcement(d, w, x, y, economy = false) {
 }
 
 module reinforced_parallel_bodypart(d, w, x, y, economy = false) {
-  parallel_bodypart(d, w, x, y, economy);
+  parallel_bodypart(d, w, x, y, economy = economy);
   /// This scaling is here just to emphasize that there is a boundary.
   scale([1, 1, 3 / 4])
     translate([0, 0, - d])
-    /// This color is here to indicate reinforcements are optional.
-    color(alpha = 0.5)
-    reinforcement(d, w, x, y, economy);
+    reinforcement(d, w, x, y, economy = economy);
 }
 
-module body(d, w, x, y, economy = false) {
+module body(d, w, x, y, economy = false, reinforce = false) {
   mirror_copy([1, 0, 0])
-    perpendicular_bodypart(d, w, x, y, economy);
+    perpendicular_bodypart(d, w, x, y, economy = economy);
   mirror_copy([0, 1, 0])
-    reinforced_parallel_bodypart(d, w, x, y, economy);
+    if (reinforce)
+      reinforced_parallel_bodypart(d, w, x, y, economy = economy);
+    else
+      parallel_bodypart(d, w, x, y, economy = economy);
 }
 
 module chamfer(d, w, x, g) {
@@ -139,33 +140,33 @@ module supported_arms(d, w, x, g, a = 0, economy = false) {
         x_shift = (d + g) * tan(a) / 2) {
       if (economy) {
         translate([x_shift, 0, 0])
-          arm(d, w, x, g, economy);
+          arm(d, w, x, g, economy = economy);
         translate([- x_shift, 0, 0])
           mirror([0, 1, 0])
-          arm(d, w, x, g, economy);
+          arm(d, w, x, g, economy = economy);
 
         translate([x_shift, 0, 0])
           mirror_copy([1, 0, 0])
-          support(d, w, x, g, economy);
+          support(d, w, x, g, economy = economy);
         translate([- x_shift, 0, 0])
           mirror([0, 1, 0])
           mirror_copy([1, 0, 0])
-          support(d, w, x, g, economy);
+          support(d, w, x, g, economy = economy);
       }
       else {
         translate([x_shift, 0, 0])
-          arm(d, w, x_skew, g, economy);
+          arm(d, w, x_skew, g, economy = economy);
         translate([- x_shift, 0, 0])
           mirror([0, 1, 0])
-          arm(d, w, x_skew, g, economy);
+          arm(d, w, x_skew, g, economy = economy);
 
         translate([x_shift, 0, 0])
           mirror_copy([1, 0, 0])
-          support(d, w, x_skew, g, economy);
+          support(d, w, x_skew, g, economy = economy);
         translate([- x_shift, 0, 0])
           mirror([0, 1, 0])
           mirror_copy([1, 0, 0])
-          support(d, w, x_skew, g, economy);
+          support(d, w, x_skew, g, economy = economy);
       }
     }
 }
@@ -194,19 +195,19 @@ module cuts(d, w, x, y) {
     bounding_cut(d, w, x, y);
 }
 
-module rack(d, w, x, y, g, a, economy = false) {
+module rack(d, w, x, y, g, a, economy = false, reinforce = false) {
   assert(economy ? d <= w : 2 * d <= w,
       "Lumber is rounder than it should be!");
 
   difference() {
     union() {
-      feet(d, w, x, y, economy);
+      feet(d, w, x, y, economy = economy);
       translate([0, 0, d])
-        legs(d, w, x, y, economy);
+        legs(d, w, x, y, economy = economy);
       translate([0, 0, 2 * d])
-        body(d, w, x, y, economy);
+        body(d, w, x, y, economy = economy, reinforce = reinforce);
       translate([0, 0, 3 * d])
-        supported_arms(d, w, x, g, a, economy);
+        supported_arms(d, w, x, g, a, economy = economy);
     }
     cuts(d, w, x, y);
   }
@@ -229,6 +230,8 @@ a = atan((x / 4) / y);
 echo(a = a);
 /// Whether to save material.
 economy = undef;
+/// Whether to reinforce narrow parts.
+reinforce = undef;
 
 /// We choose `x` and `y`
 /// to make the intersection of `rack` and `tirus` empty.
@@ -237,28 +240,29 @@ economy = undef;
 /// to make the pairwise intersection of every `tirus` empty.
 /// Then, we choose each `g` based on tire width and elasticity.
 /// In economy mode, we can guarantee
-/// that each rack can be built from six equal pieces of lumber.
+/// that each rack can be built from six equal pieces of lumber and
+/// twenty eight to forty screws depending on material dimensions.
 
 /// This rack can hold a Tunturi H310.
 color("Silver")
-  rack(d, w, x, y, 44, a, true)
+  rack(d, w, x, y, 44, a, true, true)
   tirus("Schwalbe Marathon Winter Plus");
 
 /// This rack can hold a Marin Gestalt.
 color("DarkRed")
   /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
   translate([3 * x / 2, $e, $e])
-  rack(d, w, x, y, 34, a, true)
+  rack(d, w, x, y, 34, a, true, false)
   tirus("WTB Exposure Comp");
 
 /// This rack can hold a Marin San Quentin.
 color("LightBlue")
   translate([x + x / 4, y - w / 2 + 2 * $e, 2 * $e])
-  rack(d, w, x, y, 68, a, false)
+  rack(d, w, x, y, 68, a, false, false)
   tirus("Vee Tire Flow Snap");
 
-/// This rack can hold a Tunturi eMAX FullFat.
+/// This rack can hold an Insera Muffle.
 color("Khaki")
   translate([x / 4, y - w / 2 + 3 * $e, 3 * $e])
-  rack(d, w, x, y, 102, a, false)
-  tirus("Schwalbe Jumbo Jim");
+  rack(d, w, x, y, 102, a, false, true)
+  tirus("Wanda P1258");
