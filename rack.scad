@@ -5,37 +5,40 @@ use <functions.scad>
 use <operations.scad>
 use <shapes.scad>
 
-module tirus(s) {
-  let (data = [
+module tirus(s, color = undef) {
+  color(color)
+    let (data = [
       ["Schwalbe Marathon Winter Plus", 42, 622],
       ["Schwalbe G-One Allround", 40, 622],
       ["WTB Exposure Comp", 32, 622],
       ["Merida Race Lite", 52, 584],
       ["Vee Tire Flow Snap", 66, 584],
-      ["Wanda P1258", 100, 559],
+      ["Schwalbe Jumbo Jim", 100, 559],
       /// This is the narrowest tire that is still manufactured.
       ["Tufo Elite", 19, 622],
       /// This is the widest tire that is still manufactured.
       ["Vee Tire Snow Shoe 2XL", 128, 559]])
     let (i = find(s, [for (v = data) v[0]]))
-    if (i != undef)
-    let (v = data[i])
-    let (w = v[1], d = v[2])
-    translate([0, 0, d / 2 + w])
-    rotate([90, 0, 0])
-    /// This rotation is here just to accommodate low values of `$fn`.
-    rotate([0, 0, 180 / $fn])
-    torus((d + w) / 2, w / 2);
+    if (i != undef) {
+      let (v = data[i])
+        let (w = v[1], d = v[2])
+        translate([0, 0, d / 2 + w])
+        rotate([90, 0, 0])
+        /// This rotation is here just to accommodate low values of `$fn`.
+        rotate([0, 0, 180 / $fn])
+        torus((d + w) / 2, w / 2);
+    }
 }
 
 module foot(d, w, x, y, economy = false) {
-  if (economy)
+  if (economy) {
     translate([x / 2 - w / 4, y / 2 - w / 2, 0])
-    rotate([0, 0, 180])
-    triangle(w / 2, d);
-  else
+      rotate([0, 0, 180])
+      triangle(w / 2, d);
+  } else {
     translate([x / 2 - 3 * w / 4, y / 2 - w, 0])
-    cube([w / 2, w / 2, d]);
+      cube([w / 2, w / 2, d]);
+  }
 }
 
 module feet(d, w, x, y, economy = false) {
@@ -45,17 +48,18 @@ module feet(d, w, x, y, economy = false) {
 }
 
 module leg(d, w, x, y, economy = false) {
-  if (economy)
+  if (economy) {
     mirror_copy([1, 0, 0])
-    translate([x / 2 - x / 3 + 3 * w / 4, y / 2 - w, 0]) {
-      cube([x / 3 - w, w / 2, d]);
-      translate([0, w / 2, 0])
-        rotate([0, 0, 180])
-        triangle(w / 2, d);
-  }
-  else
+      translate([x / 2 - x / 3 + 3 * w / 4, y / 2 - w, 0]) {
+        cube([x / 3 - w, w / 2, d]);
+        translate([0, w / 2, 0])
+          rotate([0, 0, 180])
+          triangle(w / 2, d);
+      }
+  } else {
     translate([- x / 2 + w / 4, y / 2 - w, 0])
-    cube([x - w / 2, w / 2, d]);
+      cube([x - w / 2, w / 2, d]);
+  }
 }
 
 module legs(d, w, x, y, economy = false) {
@@ -76,12 +80,13 @@ module parallel_bodypart(d, w, x, y, economy = false) {
 }
 
 module reinforcement(d, w, x, y, economy = false) {
-  if (economy)
+  if (economy) {
     translate([- w / 4, y / 2 - w, 0])
-    cube([w / 2, w, d]);
-  else
+      cube([w / 2, w, d]);
+  } else {
     translate([- w / 4, y / 2 - w / 2, 0])
-    cube([w / 2, w / 2, d]);
+      cube([w / 2, w / 2, d]);
+  }
 
   mirror_copy([1, 0, 0])
     translate([x / 2 - w / 4, y / 2 - w, 0])
@@ -100,10 +105,11 @@ module body(d, w, x, y, economy = false, reinforce = false) {
   mirror_copy([1, 0, 0])
     perpendicular_bodypart(d, w, x, y, economy = economy);
   mirror_copy([0, 1, 0])
-    if (reinforce)
+    if (reinforce) {
       reinforced_parallel_bodypart(d, w, x, y, economy = economy);
-    else
+    } else {
       parallel_bodypart(d, w, x, y, economy = economy);
+    }
 }
 
 module chamfer(d, w, x, g) {
@@ -122,16 +128,17 @@ module arm(d, w, x, g, economy = false) {
 }
 
 module support(d, w, x, g, economy = false) {
-  if (economy)
+  if (economy) {
     translate([x / 2 - w / 2, g / 2 + d, 0])
-    rotate([0, - 90, 0])
-    translate([0, 0, - d / 2])
-    triangle(w / 2, d);
-  else
+      rotate([0, - 90, 0])
+      translate([0, 0, - d / 2])
+      triangle(w / 2, d);
+  } else {
     translate([x / 2 - w / 2 - d / 2, g / 2 + d, 0])
-    rotate([0, - 90, 0])
-    translate([0, 0, - d / 2])
-    triangle(w, d);
+      rotate([0, - 90, 0])
+      translate([0, 0, - d / 2])
+      triangle(w, d);
+  }
 }
 
 module supported_arms(d, w, x, g, a = 0, economy = false) {
@@ -152,8 +159,7 @@ module supported_arms(d, w, x, g, a = 0, economy = false) {
           mirror([0, 1, 0])
           mirror_copy([1, 0, 0])
           support(d, w, x, g, economy = economy);
-      }
-      else {
+      } else {
         translate([x_shift, 0, 0])
           arm(d, w, x_skew, g, economy = economy);
         translate([- x_shift, 0, 0])
@@ -195,22 +201,24 @@ module cuts(d, w, x, y) {
     bounding_cut(d, w, x, y);
 }
 
-module rack(d, w, x, y, g, a, economy = false, reinforce = false) {
+module rack(d, w, x, y, g, a,
+    economy = false, reinforce = false, color = undef) {
   assert(economy ? d <= w : 2 * d <= w,
       "Lumber is rounder than it should be!");
 
-  difference() {
-    union() {
-      feet(d, w, x, y, economy = economy);
-      translate([0, 0, d])
-        legs(d, w, x, y, economy = economy);
-      translate([0, 0, 2 * d])
-        body(d, w, x, y, economy = economy, reinforce = reinforce);
-      translate([0, 0, 3 * d])
-        supported_arms(d, w, x, g, a, economy = economy);
+  color(color)
+    difference() {
+      union() {
+        feet(d, w, x, y, economy = economy);
+        translate([0, 0, d])
+          legs(d, w, x, y, economy = economy);
+        translate([0, 0, 2 * d])
+          body(d, w, x, y, economy = economy, reinforce = reinforce);
+        translate([0, 0, 3 * d])
+          supported_arms(d, w, x, g, a, economy = economy);
+      }
+      cuts(d, w, x, y);
     }
-    cuts(d, w, x, y);
-  }
   rotate([0, 0, a])
     children();
 }
@@ -244,25 +252,25 @@ reinforce = undef;
 /// twenty eight to forty screws depending on material dimensions.
 
 /// This rack can hold a Tunturi H310.
-color("Silver")
-  rack(d, w, x, y, 44, a, true, true)
-  tirus("Schwalbe Marathon Winter Plus");
+rack(d, w, x, y, 44, a,
+    economy = true, reinforce = true, color = "Silver")
+  tirus("Schwalbe Marathon Winter Plus", color = "DimGray");
 
-/// This rack can hold a Marin Gestalt.
-color("DarkRed")
-  /// This `$e` is here to work around a z-fighting bug in OpenSCAD.
-  translate([3 * x / 2, $e, $e])
-  rack(d, w, x, y, 34, a, true, false)
-  tirus("WTB Exposure Comp");
+/// This `$e` is here to work around a z-fighting bug in OpenSCAD.
+translate([3 * x / 2, $e, $e])
+  /// This rack can hold a Marin Gestalt.
+  rack(d, w, x, y, 34, a,
+    economy = true, reinforce = false, color = "DarkRed")
+  tirus("WTB Exposure Comp", color = "DimGray");
 
-/// This rack can hold a Marin San Quentin.
-color("LightBlue")
-  translate([x + x / 4, y - w / 2 + 2 * $e, 2 * $e])
-  rack(d, w, x, y, 68, a, false, false)
-  tirus("Vee Tire Flow Snap");
+translate([x + x / 4, y - w / 2 + 2 * $e, 2 * $e])
+  /// This rack can hold a Marin San Quentin.
+  rack(d, w, x, y, 68, a,
+    economy = false, reinforce = false, color = "LightBlue")
+  tirus("Vee Tire Flow Snap", color = "DimGray");
 
-/// This rack can hold an Insera Muffle.
-color("Khaki")
-  translate([x / 4, y - w / 2 + 3 * $e, 3 * $e])
-  rack(d, w, x, y, 102, a, false, true)
-  tirus("Wanda P1258");
+translate([x / 4, y - w / 2 + 3 * $e, 3 * $e])
+  /// This rack can hold a Tunturi Tomahawk.
+  rack(d, w, x, y, 102, a,
+    economy = false, reinforce = true, color = "Khaki")
+  tirus("Schwalbe Jumbo Jim", color = "DimGray");
