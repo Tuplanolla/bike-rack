@@ -17,4 +17,4 @@ the sole author of this project.
 There are two options that produce a total
 of four variations of the model.
 In economy mode, the rack uses less wood, and
-without reinforcements, the rack uses less screws.
+without reinforcements, the rack uses fewer screws.
